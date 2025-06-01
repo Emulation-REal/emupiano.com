@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EmuPiano</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter&display=swap">
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #111;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #piano { margin-top: 20px; display: flex; }
+    .key {
+      width: 40px; height: 160px; margin: 1px;
+      background: white; border: 1px solid #333;
+      text-align: center; line-height: 160px;
+      cursor: pointer; user-select: none;
+    }
+    .key.playing { background: lightblue; }
+    .black { background: black; width: 25px; height: 100px; position: relative; top: 0; z-index: 2; margin-left: -12.5px; margin-right: -12.5px; }
+    #chat { margin-top: 20px; width: 90%; max-width: 500px; }
+    #messages { height: 150px; overflow-y: scroll; border: 1px solid #555; padding: 5px; background: #222; }
+    #input { width: 100%; padding: 5px; box-sizing: border-box; }
+    #userList { margin-top: 10px; font-size: 14px; }
+    #menu { margin-top: 10px; }
+    button { margin: 5px; padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h1>🎹 EmuPiano</h1>
+  <input id="roomInput" placeholder="Room name..." />
+  <button onclick="joinRoom()">Join</button>
+  <div id="piano"></div>
+
+  <div id="chat">
+    <div id="messages"></div>
+    <input id="input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()" />
+  </div>
+
+  <div id="userList">Users:</div>
+
+  <div id="menu">
+    <button onclick="toggleTheme()">🌗 Theme</button>
+    <button onclick="kickUser()">👢 Kick</button>
+    <button onclick="muteUser()">🔇 Mute</button>
+    <button onclick="saveSong()">💾 Save</button>
+    <button onclick="loadSong()">📂 Load</button>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
