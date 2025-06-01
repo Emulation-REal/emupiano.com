@@ -38,7 +38,7 @@ function joinRoom() {
 
   usersRef.on('value', snap => {
     const val = snap.val() || {};
-    userList.innerHTML = "Users: " + Object.keys(val).join(", ");
+    userList.innerHTML = "Users:<br>" + Object.keys(val).join("<br>");
   });
 
   chatRef.on('child_added', snap => {
@@ -95,7 +95,7 @@ buildPiano();
 
 function toggleTheme() {
   isDark = !isDark;
-  document.body.style.background = isDark ? "#111" : "#eee";
+  document.body.style.background = isDark ? "#121212" : "#eeeeee";
   document.body.style.color = isDark ? "white" : "black";
 }
 
