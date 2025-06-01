@@ -1,296 +1,333 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>EmuPiano</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap">
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Open Sans', sans-serif;
-    }
-    body {
-      margin: 0;
-      background: #121212;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-    #top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 10px;
-      background: rgba(0,0,0,0.7);
-      border-bottom: 1px solid #333;
-    }
-    #roomInput {
-      background: #1f1f1f;
-      border: 1px solid #333;
-      color: white;
-      padding: 5px;
-      width: 200px;
-    }
-    #container {
-      display: flex;
-      height: 100%;
-    }
-    #left-panel {
-      width: 300px;
-      background: rgba(0,0,0,0.4);
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid #333;
-    }
-    #userList {
-      padding: 5px;
-      font-size: 14px;
-      border-bottom: 1px solid #333;
-      background: rgba(0,0,0,0.3);
-    }
-    #chat {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    #messages {
-      flex: 1;
-      padding: 5px;
-      overflow-y: auto;
-      font-size: 13px;
-      background: rgba(0,0,0,0.3);
-    }
-    #input {
-      padding: 5px;
-      border: none;
-      border-top: 1px solid #333;
-      background: #181818;
-      color: white;
-    }
-    #input:focus {
-      outline: none;
-    }
-    #piano-container {
-      flex: 1;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      background: #202020;
-      position: relative;
-    }
-    #piano {
-      display: flex;
-      padding: 20px;
-    }
-    .key {
-      width: 40px;
-      height: 180px;
-      background: white;
-      margin: 1px;
-      border: 1px solid #333;
-      border-radius: 2px;
-      cursor: pointer;
-      user-select: none;
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      font-size: 10px;
-      color: black;
-    }
-    .key.playing {
-      background: lightblue;
-    }
-    #menu {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(0,0,0,0.5);
-      padding: 8px;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-    #menu button {
-      margin: 3px;
-      background: #333;
-      border: none;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    #menu button:hover {
-      background: #444;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EmuPiano 88-Key with Users</title>
+<style>
+  body {
+    background: #111;
+    color: #eee;
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 0;
+    user-select: none;
+  }
+  #user-list {
+    position: fixed;
+    top: 10px; right: 10px;
+    width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.6);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+  }
+  #user-list h3 {
+    margin: 0 0 10px 0;
+    font-weight: normal;
+    font-size: 16px;
+  }
+  #username-change {
+    position: fixed;
+    top: 10px; left: 10px;
+  }
+  #username-change input {
+    padding: 5px 8px;
+    font-size: 14px;
+    border-radius: 4px;
+    border: none;
+    outline: none;
+  }
+
+  #piano {
+    position: relative;
+    margin: 60px auto 20px auto;
+    width: 1400px; /* approx width for 88 keys */
+    height: 220px;
+    background: #222;
+    border: 2px solid #444;
+    border-radius: 6px;
+    box-shadow: 0 0 20px #0af inset;
+  }
+  .white-key, .black-key {
+    position: absolute;
+    border: 1px solid #555;
+    border-radius: 0 0 6px 6px;
+    cursor: pointer;
+  }
+  .white-key {
+    width: 16px;
+    height: 220px;
+    background: linear-gradient(to bottom, #eee, #ccc);
+    z-index: 1;
+    box-shadow: inset 0 5px 6px rgba(255,255,255,0.7);
+  }
+  .black-key {
+    width: 10px;
+    height: 140px;
+    background: linear-gradient(to bottom, #222, #000);
+    top: 0;
+    z-index: 2;
+    margin-left: -5px;
+    box-shadow: 0 5px 8px rgba(0,0,0,0.8);
+  }
+  .key-label {
+    position: absolute;
+    bottom: 4px;
+    width: 16px;
+    text-align: center;
+    font-size: 9px;
+    color: #333;
+    user-select: none;
+  }
+  /* Visual effect for key press */
+  .key-press-effect {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: linear-gradient(90deg, #0ff, #08f);
+    opacity: 0.6;
+    border-radius: 0 0 6px 6px;
+    animation: riseFade 0.8s ease forwards;
+  }
+  @keyframes riseFade {
+    0% { transform: translateY(0); opacity: 0.6;}
+    100% { transform: translateY(-100px); opacity: 0;}
+  }
+</style>
 </head>
 <body>
-  <div id="top-bar">
-    <input id="roomInput" placeholder="Room name..." />
-    <button onclick="joinRoom()">Join Room</button>
-    <span style="font-weight: bold;">🎹 EmuPiano</span>
-  </div>
 
-  <div id="container">
-    <div id="left-panel">
-      <div id="userList">Users:</div>
-      <div id="chat">
-        <div id="messages"></div>
-        <input id="input" placeholder="Type here..." onkeydown="if(event.key==='Enter') sendMessage()" />
-      </div>
-    </div>
-    <div id="piano-container">
-      <div id="piano"></div>
-      <div id="menu">
-        <button onclick="toggleTheme()">🌗 Theme</button>
-        <button onclick="kickUser()">👢 Kick</button>
-        <button onclick="muteUser()">🔇 Mute</button>
-        <button onclick="saveSong()">💾 Save</button>
-        <button onclick="loadSong()">📂 Load</button>
-      </div>
-    </div>
-  </div>
+<div id="username-change">
+  <label for="usernameInput" style="color:#0af;">Your Name:</label><br/>
+  <input id="usernameInput" type="text" maxlength="15" placeholder="Enter your name" />
+</div>
 
-  <script>
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAdy-R98rUg23ibhbYVNRZfUfeY4Uy7TPs",
-      authDomain: "emupiano-4b7ac.firebaseapp.com",
-      databaseURL: "https://emupiano-4b7ac-default-rtdb.firebaseio.com",
-      projectId: "emupiano-4b7ac",
-      storageBucket: "emupiano-4b7ac.appspot.com",
-      messagingSenderId: "1035222015142",
-      appId: "1:1035222015142:web:ff34b888c86ed67cd36867",
-      measurementId: "G-7NVMZMB8RH"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+<div id="user-list">
+  <h3>Users in Lobby</h3>
+  <ul id="usersUl" style="padding-left: 20px; margin:0;"></ul>
+</div>
 
-    // Main
-    const keys = ['C','D','E','F','G','A','B'];
-    const piano = document.getElementById('piano');
-    const userList = document.getElementById('userList');
-    const messages = document.getElementById('messages');
-    let username = "User" + Math.floor(Math.random() * 1000);
-    let currentRoom = "lobby";
-    let usersRef, chatRef, pianoRef;
-    let isDark = true;
-    let mutedUsers = {};
-    let isOwner = false;
+<div id="piano"></div>
 
-    function joinRoom() {
-      const room = document.getElementById('roomInput').value.trim();
-      if (!room) return;
-      if (usersRef) usersRef.off();
-      if (chatRef) chatRef.off();
-      if (pianoRef) pianoRef.off();
-      currentRoom = room;
-      isOwner = username === "Emulation12";
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+  // Your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyAdy-R98rUg23ibhbYVNRZfUfeY4Uy7TPs",
+    authDomain: "emupiano-4b7ac.firebaseapp.com",
+    databaseURL: "https://emupiano-4b7ac-default-rtdb.firebaseio.com",
+    projectId: "emupiano-4b7ac",
+    storageBucket: "emupiano-4b7ac.appspot.com",
+    messagingSenderId: "1035222015142",
+    appId: "1:1035222015142:web:ff34b888c86ed67cd36867",
+    measurementId: "G-7NVMZMB8RH"
+  };
 
-      usersRef = db.ref(`rooms/${room}/users`);
-      chatRef = db.ref(`rooms/${room}/chat`);
-      pianoRef = db.ref(`rooms/${room}/notes`);
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
 
-      usersRef.on('value', snap => {
-        const val = snap.val() || {};
-        userList.innerHTML = "Users:<br>" + Object.keys(val).join("<br>");
-      });
+  // Anonymous auth & user data setup
+  let currentUser = null;
+  let userId = null;
+  let username = localStorage.getItem('username') || "Guest";
 
-      chatRef.on('child_added', snap => {
-        const { sender, message } = snap.val();
-        if (!mutedUsers[sender]) {
-          messages.innerHTML += `<div><b>${sender}:</b> ${message}</div>`;
-          messages.scrollTop = messages.scrollHeight;
+  // Piano key data: 88 keys from MIDI 21 (A0) to 108 (C8)
+  const TOTAL_KEYS = 88;
+  const FIRST_MIDI_NOTE = 21;
+
+  // Which notes have black keys above?
+  // Pattern of black keys in octave (C to B): C# D#   F# G# A#
+  // White keys are numbered from 0..87
+  const blackKeyOffsets = [1, 3, 6, 8, 10];
+
+  // Helper to check if a MIDI note is black key
+  function isBlackKey(midiNote) {
+    const noteInOctave = midiNote % 12;
+    return blackKeyOffsets.includes(noteInOctave);
+  }
+
+  // Calculate position of white keys and black keys
+  // White keys index for layout - black keys positioned relative to white keys
+  // We count white keys to position black keys
+
+  // Map white keys only with their position for left style
+  // White keys widths: 16px, black keys widths: 10px
+
+  const whiteKeyWidth = 16;
+  const blackKeyWidth = 10;
+
+  // Build piano UI
+  const piano = document.getElementById('piano');
+
+  // Track count of white keys so we can position black keys correctly
+  let whiteKeyCount = 0;
+
+  // Store references to keys for event handling
+  const keyElements = {};
+
+  for(let i = 0; i < TOTAL_KEYS; i++) {
+    const midiNote = FIRST_MIDI_NOTE + i;
+    const black = isBlackKey(midiNote);
+
+    if(!black) {
+      // White key
+      const key = document.createElement('div');
+      key.classList.add('white-key');
+      key.style.left = (whiteKeyCount * whiteKeyWidth) + 'px';
+      key.dataset.midi = midiNote;
+      key.title = midiNote;
+
+      // Add note label (only for white keys)
+      const label = document.createElement('div');
+      label.classList.add('key-label');
+      label.style.left = (whiteKeyCount * whiteKeyWidth) + 'px';
+      label.textContent = getNoteName(midiNote);
+      piano.appendChild(label);
+
+      piano.appendChild(key);
+      keyElements[midiNote] = key;
+      whiteKeyCount++;
+    }
+  }
+
+  // Now add black keys positioned relative to white keys
+  whiteKeyCount = 0;
+  for(let i = 0; i < TOTAL_KEYS; i++) {
+    const midiNote = FIRST_MIDI_NOTE + i;
+    const black = isBlackKey(midiNote);
+
+    if(!black) {
+      whiteKeyCount++;
+    } else {
+      // Black key position: sits between whiteKeyCount-1 and whiteKeyCount
+      const key = document.createElement('div');
+      key.classList.add('black-key');
+      // Position black key slightly left to sit above white keys
+      // The offset calculation is tricky; it depends on which black key
+      const offset = (whiteKeyCount - 1) * whiteKeyWidth + whiteKeyWidth - blackKeyWidth/2;
+      key.style.left = offset + 'px';
+      key.dataset.midi = midiNote;
+      key.title = midiNote;
+
+      piano.appendChild(key);
+      keyElements[midiNote] = key;
+    }
+  }
+
+  // Utility: Convert MIDI note to note name (like C4, D#3)
+  function getNoteName(midiNote) {
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const octave = Math.floor(midiNote / 12) - 1;
+    return noteNames[midiNote % 12] + octave;
+  }
+
+  // Play animation on key press (color rising effect)
+  function animateKeyPress(keyElem) {
+    const effect = document.createElement('div');
+    effect.className = 'key-press-effect';
+    keyElem.appendChild(effect);
+    effect.addEventListener('animationend', () => {
+      effect.remove();
+    });
+  }
+
+  // Key click handler
+  function onKeyClick(e) {
+    const keyElem = e.currentTarget;
+    const midiNote = +keyElem.dataset.midi;
+    animateKeyPress(keyElem);
+    // Here you can also send the note to the backend or play sound
+    console.log('Key pressed:', getNoteName(midiNote), midiNote);
+    // Example: sendNoteToFirebase(midiNote);
+  }
+
+  // Attach click listeners to all keys
+  Object.values(keyElements).forEach(key => {
+    key.addEventListener('mousedown', onKeyClick);
+  });
+
+  // ----- USER MANAGEMENT -----
+
+  // Sign in anonymously
+  auth.signInAnonymously().catch(console.error);
+
+  // On auth state change, set up user data
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      userId = user.uid;
+
+      // Load username from local storage or from DB
+      username = localStorage.getItem('username') || "Guest";
+
+      // Update username input value
+      document.getElementById('usernameInput').value = username;
+
+      // Save or update username in DB
+      updateUserPresence();
+
+      // Setup presence listeners
+      setupPresenceListeners();
+    } else {
+      currentUser = null;
+      userId = null;
+    }
+  });
+
+  // Update user presence in DB
+  function updateUserPresence() {
+    if(!userId) return;
+    const userRef = db.ref('users/' + userId);
+    userRef.set({
+      username,
+      lastActive: Date.now()
+    });
+    // Remove user from DB when disconnect
+    userRef.onDisconnect().remove();
+  }
+
+  // Listen for username input changes
+  const usernameInput = document.getElementById('usernameInput');
+  usernameInput.addEventListener('change', e => {
+    const val = e.target.value.trim();
+    if(val.length > 0 && val.length <= 15) {
+      username = val;
+      localStorage.setItem('username', username);
+      updateUserPresence();
+    } else {
+      // Reset to previous valid username if invalid
+      e.target.value = username;
+    }
+  });
+
+  // Show list of users in lobby
+  const usersUl = document.getElementById('usersUl');
+
+  function setupPresenceListeners() {
+    const usersRef = db.ref('users');
+    usersRef.on('value', snapshot => {
+      const users = snapshot.val() || {};
+      usersUl.innerHTML = '';
+      Object.entries(users).forEach(([uid, data]) => {
+        const li = document.createElement('li');
+        li.textContent = data.username || 'Guest';
+        if(uid === userId) {
+          li.style.fontWeight = 'bold';
+          li.textContent += ' (You)';
         }
+        usersUl.appendChild(li);
       });
+    });
+  }
+</script>
 
-      pianoRef.on('child_added', snap => {
-        const { note } = snap.val();
-        playSound(note);
-        const el = document.querySelector(`.key[data-note="${note}"]`);
-        if (el) {
-          el.classList.add("playing");
-          setTimeout(() => el.classList.remove("playing"), 200);
-        }
-      });
-
-      usersRef.child(username).set(true);
-      usersRef.child(username).onDisconnect().remove();
-    }
-
-    function sendMessage() {
-      const val = document.getElementById('input').value.trim();
-      if (!val) return;
-      chatRef.push({ sender: username, message: val });
-      document.getElementById('input').value = "";
-    }
-
-    function sendNote(note) {
-      pianoRef.push({ note });
-    }
-
-    function playSound(note) {
-      const audio = new Audio(`https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/piano-mp3/${note}.mp3`);
-      audio.play();
-    }
-
-    function buildPiano() {
-      for (let note of keys) {
-        const el = document.createElement('div');
-        el.className = 'key';
-        el.innerText = note;
-        el.dataset.note = note;
-        el.onclick = () => {
-          sendNote(note);
-        };
-        piano.appendChild(el);
-      }
-    }
-    buildPiano();
-
-    function toggleTheme() {
-      isDark = !isDark;
-      document.body.style.background = isDark ? "#121212" : "#eeeeee";
-      document.body.style.color = isDark ? "white" : "black";
-    }
-
-    function kickUser() {
-      if (!isOwner) return alert("Only Emulation12 can kick.");
-      const name = prompt("Kick who?");
-      if (name) db.ref(`rooms/${currentRoom}/users/${name}`).remove();
-    }
-
-    function muteUser() {
-      const name = prompt("Mute who?");
-      if (name) mutedUsers[name] = true;
-    }
-
-    function saveSong() {
-      let song = [];
-      pianoRef.once('value', snap => {
-        snap.forEach(child => {
-          song.push(child.val().note);
-        });
-        localStorage.setItem("savedSong", JSON.stringify(song));
-        alert("Song saved!");
-      });
-    }
-
-    function loadSong() {
-      const song = JSON.parse(localStorage.getItem("savedSong") || "[]");
-      let i = 0;
-      const interval = setInterval(() => {
-        if (i >= song.length) return clearInterval(interval);
-        sendNote(song[i++]);
-      }, 300);
-    }
-
-    // Auto-join default room
-    document.getElementById('roomInput').value = "lobby";
-    joinRoom();
-  </script>
 </body>
 </html>
