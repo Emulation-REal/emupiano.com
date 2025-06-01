@@ -5,54 +5,153 @@
   <title>EmuPiano</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap">
   <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Open Sans', sans-serif;
+    }
     body {
-      font-family: Inter, sans-serif;
       margin: 0;
-      padding: 0;
-      background: #111;
+      background: #121212;
       color: white;
       display: flex;
       flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #top-bar {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
+      padding: 6px 10px;
+      background: rgba(0,0,0,0.7);
+      border-bottom: 1px solid #333;
     }
-    #piano { margin-top: 20px; display: flex; }
+    #roomInput {
+      background: #1f1f1f;
+      border: 1px solid #333;
+      color: white;
+      padding: 5px;
+      width: 200px;
+    }
+    #container {
+      display: flex;
+      height: 100%;
+    }
+    #left-panel {
+      width: 300px;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #333;
+    }
+    #userList {
+      padding: 5px;
+      font-size: 14px;
+      border-bottom: 1px solid #333;
+      background: rgba(0,0,0,0.3);
+    }
+    #chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #messages {
+      flex: 1;
+      padding: 5px;
+      overflow-y: auto;
+      font-size: 13px;
+      background: rgba(0,0,0,0.3);
+    }
+    #input {
+      padding: 5px;
+      border: none;
+      border-top: 1px solid #333;
+      background: #181818;
+      color: white;
+    }
+    #input:focus {
+      outline: none;
+    }
+    #piano-container {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      background: #202020;
+      position: relative;
+    }
+    #piano {
+      display: flex;
+      padding: 20px;
+    }
     .key {
-      width: 40px; height: 160px; margin: 1px;
-      background: white; border: 1px solid #333;
-      text-align: center; line-height: 160px;
-      cursor: pointer; user-select: none;
+      width: 40px;
+      height: 180px;
+      background: white;
+      margin: 1px;
+      border: 1px solid #333;
+      border-radius: 2px;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      font-size: 10px;
+      color: black;
     }
-    .key.playing { background: lightblue; }
-    .black { background: black; width: 25px; height: 100px; position: relative; top: 0; z-index: 2; margin-left: -12.5px; margin-right: -12.5px; }
-    #chat { margin-top: 20px; width: 90%; max-width: 500px; }
-    #messages { height: 150px; overflow-y: scroll; border: 1px solid #555; padding: 5px; background: #222; }
-    #input { width: 100%; padding: 5px; box-sizing: border-box; }
-    #userList { margin-top: 10px; font-size: 14px; }
-    #menu { margin-top: 10px; }
-    button { margin: 5px; padding: 5px 10px; }
+    .key.playing {
+      background: lightblue;
+    }
+    #menu {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.5);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    #menu button {
+      margin: 3px;
+      background: #333;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #menu button:hover {
+      background: #444;
+    }
   </style>
 </head>
 <body>
-  <h1>🎹 EmuPiano</h1>
-  <input id="roomInput" placeholder="Room name..." />
-  <button onclick="joinRoom()">Join</button>
-  <div id="piano"></div>
-
-  <div id="chat">
-    <div id="messages"></div>
-    <input id="input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()" />
+  <div id="top-bar">
+    <input id="roomInput" placeholder="Room name..." />
+    <button onclick="joinRoom()">Join Room</button>
+    <span style="font-weight: bold;">🎹 EmuPiano</span>
   </div>
 
-  <div id="userList">Users:</div>
-
-  <div id="menu">
-    <button onclick="toggleTheme()">🌗 Theme</button>
-    <button onclick="kickUser()">👢 Kick</button>
-    <button onclick="muteUser()">🔇 Mute</button>
-    <button onclick="saveSong()">💾 Save</button>
-    <button onclick="loadSong()">📂 Load</button>
+  <div id="container">
+    <div id="left-panel">
+      <div id="userList">Users:</div>
+      <div id="chat">
+        <div id="messages"></div>
+        <input id="input" placeholder="Type here..." onkeydown="if(event.key==='Enter') sendMessage()" />
+      </div>
+    </div>
+    <div id="piano-container">
+      <div id="piano"></div>
+      <div id="menu">
+        <button onclick="toggleTheme()">🌗 Theme</button>
+        <button onclick="kickUser()">👢 Kick</button>
+        <button onclick="muteUser()">🔇 Mute</button>
+        <button onclick="saveSong()">💾 Save</button>
+        <button onclick="loadSong()">📂 Load</button>
+      </div>
+    </div>
   </div>
 
   <script src="main.js"></script>
